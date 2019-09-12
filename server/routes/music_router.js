@@ -1,49 +1,52 @@
 const express = require('express');
 const router = express.Router();
+const pool = require('../modules/pool.js');
 
-let musicLibrary = [
-    {
-        artist: "Sturgill Simpson",
-        track: "Keep It Between the Lines",
-        rank: 1,
-        published: "4-16-2016"
-    },
-    {
-        artist: "Margo Price",
-        track: "Since You Put Me Down",
-        rank: 2,
-        published: "3-25-2016"
-    },
-    {
-        artist: "Jason Isbell",
-        track: "Alabama Pines",
-        rank: 3,
-        published: "4-12-2011"
-    },
-    {
-        artist: "Midland",
-        track: "Check Cashin' Country",
-        rank: 4,
-        published: "9-22-2017"
-    },
-    {
-        artist: "Nikki Lane",
-        track: "Highway Queen",
-        rank: 5,
-        published: "2-17-2017"
-    }
-]
 
 router.get('/', (req, res) => {
     // res.send(musicLibrary);
     let queryText = `SELECT * FROM "songs";`;
+    pool.query(queryText)
+    .then((result) => {
+        // console.log('results', result);
+        res.send(result.rows);
+    })
+    .catch((error) => {
+        console.log('error making query', error);
+        res.sendStatus(500);
+    })
+});
 
+router.delete('/:id', (req, res) => {
+    console.log(req.params.id);
+    res.sendStatus(200);
+    // res.send(musicLibrary);
+    let queryText = `DELETE FROM "songs" WHERE "id" = $1;`;
+    pool.query(queryText, [req.params.id])
+    .then((result) => {
+        // console.log('results', result);
+        res.send(result.rows);
+    })
+    .catch((error) => {
+        console.log('error making query', error);
+        res.sendStatus(500);
+    })
 });
 
 router.post('/', (req, res) => {
     console.log("HELLO FROM THE POST", req.body);
-    res.sendStatus(200);
-    musicLibrary.push(req.body);
+    const newSong = req.body;
+    const queryText = `INSERT INTO "songs" ("artist", "track", "rank", "published")
+    VALUES ($1, $2, $3, $4);`;
+    pool.query(queryText, [newSong.artist, newSong.track, newSong.rank, newSong.published])
+    .then((result) => {
+        console.log('result', result);
+        res.sendStatus(200);
+    }) 
+    .catch((error) => {
+        console.log(`error making query ${queryText}`, error);
+        res.sendStatus(500);
+    })
 })
 
 module.exports = router;
